@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Codespaces & FastAPI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/ui/bootstrap.min.css">
+    <style>
+  html, body, .container {
+    height: 100%;
+}
+.container {
+    display: table;
+    vertical-align: middle;
+}
+.vertical-center-row {
+    display: table-cell;
+    vertical-align: middle;
+}
+textarea { resize: vertical; }
+    </style>
+  </head>
+  <body>
+    <div class="container pt-4">
+      <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+          <h2>Extracurricular Activities Manager</h2>
+          <p>This demo lets you add and list activities through a simple FastAPI backend.</p>
+
+          <div class="card mb-4">
+            <div class="card-header">Add New Activity</div>
+            <div class="card-body">
+              <form id="activity-form">
+                <div class="mb-3">
+                  <label class="form-label">Name</label>
+                  <input id="name" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Description</label>
+                  <textarea id="description" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Category</label>
+                  <input id="category" class="form-control" required />
+                </div>
+                <div class="form-check mb-3">
+                  <input id="active" class="form-check-input" type="checkbox" checked />
+                  <label for="active" class="form-check-label">Active</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Activity</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Activity List</div>
+            <div class="card-body" id="activities"></div>
+          </div>
+
+          <div class="mt-4">
+            <button onclick="window.location.href='/docs'" class="btn btn-secondary">Open API Docs</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      async function loadActivities() {
+        const result = await fetch('/activities');
+        const activities = await result.json();
+        const container = document.getElementById('activities');
+        if (!activities.length) {
+          container.innerHTML = '<p>No activities yet.</p>';
+          return;
+        }
+        container.innerHTML = `<ul class="list-group">${activities.map(a => `
+          <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-bold">${a.name} <small class="text-muted">(${a.category})</small></div>
+              <div>${a.description}</div>
+            </div>
+            <span class="badge rounded-pill ${a.active ? 'bg-success' : 'bg-secondary'}">${a.active ? 'Active' : 'Inactive'}</span>
+          </li>`).join('')}</ul>`;
+      }
+
+      document.getElementById('activity-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          description: document.getElementById('description').value.trim(),
+          category: document.getElementById('category').value.trim(),
+          active: document.getElementById('active').checked,
+        };
+        const response = await fetch('/activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          alert('Failed to add activity');
+          return;
+        }
+        document.getElementById('activity-form').reset();
+        document.getElementById('active').checked = true;
+        loadActivities();
+      });
+
+      loadActivities();
+    </script>
+  </body>
+</html>
